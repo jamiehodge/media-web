@@ -3,13 +3,15 @@ module Media
     module Authenticators
       class Base
 
+        attr_reader :context, :authenticator
+
         def initialize(context, authenticator)
           @context = context
           @authenticator = authenticator
         end
 
         def authentication
-          authenticator[id]
+          authenticator[id] if authenticator
         end
 
         def id
@@ -17,7 +19,7 @@ module Media
         end
 
         def person_id
-          authentication && authentication.person_id
+          authentication.person_id if authentication
         end
       end
     end

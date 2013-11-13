@@ -16,7 +16,9 @@ Gem::Specification.new do |gem|
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.servicename(f) }
   gem.require_paths = ["lib"]
 
+  gem.add_dependency "puma"
   gem.add_dependency "rack-cache"
-  gem.add_dependency "rack-throttle"
   gem.add_dependency "sinatra"
+  gem.add_dependency "slim"
+  gem.add_dependency "yajl-ruby"
 end

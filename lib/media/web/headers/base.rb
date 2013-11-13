@@ -3,6 +3,8 @@ module Media
     module Headers
       class Base
 
+        attr_reader :headers
+
         def initialize(headers)
           @headers = headers
         end

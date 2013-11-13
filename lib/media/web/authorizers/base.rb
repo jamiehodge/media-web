@@ -22,7 +22,7 @@ module Media
         end
 
         def show?
-          collection.where(id: item.id).exists?
+          collection.where(id: item.id).exists
         end
 
         def create?
