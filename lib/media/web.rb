@@ -1,0 +1,5 @@
+require_relative "web/authenticators"
+require_relative "web/authorizers"
+require_relative "web/controllers"
+require_relative "web/parameters"
+require_relative "web/presenters"
