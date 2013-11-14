@@ -77,6 +77,15 @@ module Media
             end
           end
 
+          def download
+            get "/:id/download" do
+              return 403 unless authorize.download?
+
+              send_file item.file, disposition: :inline,
+                filename: item.name
+            end
+          end
+
           def update
             put "/:id" do
               item.set_fields(params, authorize.fields, missing: :skip)

@@ -25,6 +25,10 @@ module Media
           collection.where(id: item.id).exists
         end
 
+        def download?
+          show?
+        end
+
         def create?
           false
         end
