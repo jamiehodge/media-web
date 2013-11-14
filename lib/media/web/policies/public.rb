@@ -2,8 +2,8 @@ require_relative "base"
 
 module Media
   module Web
-    module Authorizers
-      class Static < Base
+    module Policies
+      class Public < Base
 
         def self.collection(person, dataset)
           dataset
@@ -14,6 +14,18 @@ module Media
         end
 
         def show?
+          collection.where(id: item.id).exists
+        end
+
+        def create?
+          true
+        end
+
+        def update?
+          true
+        end
+
+        def destroy?
           true
         end
       end

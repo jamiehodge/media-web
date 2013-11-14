@@ -12,11 +12,11 @@ module Media
         extend Descendable
 
         set(:authenticator) { Authenticators::Base }
-        set(:authorizer)    { Authorizers::Base }
         set(:headers)       { Headers::Base }
         set(:model)         { raise NotImplementedError }
         set(:namespace)     { name.split("::").last.downcase }
         set(:parameters)    { Parameters::Base }
+        set(:policy)        { Policies::Base }
         set(:presenter)     { Presenters::Base }
         set(:provides)      { %w(application/json) }
 
@@ -120,7 +120,7 @@ module Media
         end
 
         def authorize
-          self.class.authorizer.new(authenticate.person_id, item)
+          self.class.policy.new(authenticate.person_id, item)
         end
 
         def collection

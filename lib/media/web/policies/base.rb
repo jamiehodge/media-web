@@ -1,6 +1,6 @@
 module Media
   module Web
-    module Authorizers
+    module Policies
       class Base
         attr_reader :person, :item
 
