@@ -23,6 +23,15 @@ module Media
         def type
           params[:type]
         end
+
+        def to_h
+          {
+            "file" => file,
+            "name" => name,
+            "size" => size,
+            "type" => type
+          }
+        end
       end
     end
   end

@@ -25,7 +25,7 @@ module Media
           [params[:offset].to_i, 0].max
         end
 
-        def upload(name)
+        def upload(name = "file")
           Upload.new(params[name])
         end
       end
