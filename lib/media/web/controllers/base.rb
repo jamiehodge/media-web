@@ -49,7 +49,8 @@ module Media
 
           def create
             post "/" do
-              item.set_fields(params.merge(upload.to_h), authorize.fields, missing: :skip)
+              item.set_fields(params.merge(parameters.upload.to_h),
+                authorize.fields, missing: :skip)
 
               return 403 unless authorize.create?
 
