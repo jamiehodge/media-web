@@ -25,7 +25,7 @@ module Media
         end
 
         def to_h
-          return {} if params.empty?
+          return {} unless params
 
           {
             "file" => file,
