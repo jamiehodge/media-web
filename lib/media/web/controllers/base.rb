@@ -11,11 +11,14 @@ module Media
       class Base < Sinatra::Base
         extend Descendable
 
+        UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
+
         set(:authenticator) { Authenticators::Base }
         set(:headers)       { Headers::Base }
         set(:model)         { raise NotImplementedError }
         set(:namespace)     { name.split("::").last.downcase }
         set(:parameters)    { Parameters::Base }
+        set(:pattern)       { UUID }
         set(:policy)        { Policies::Base }
         set(:presenter)     { Presenters::Base }
         set(:provides)      { %w(application/json) }
@@ -71,7 +74,7 @@ module Media
           end
 
           def show
-            get "/:id" do
+            get %r{/(?<id>#{pattern})} do
               return 403 unless authorize.show?
 
               respond_with :show, locals: { item: present(item) }
@@ -79,7 +82,7 @@ module Media
           end
 
           def download
-            get "/:id/download" do
+            get %r{/(?<id>#{pattern})/download} do
               return 403 unless authorize.download?
 
               send_file item.file, filename: item.name
@@ -87,7 +90,7 @@ module Media
           end
 
           def update
-            put "/:id" do
+            put %r{/(?<id>#{pattern})} do
               item.set_fields(params, authorize.fields, missing: :skip)
 
               return 403 unless authorize.update?
@@ -105,7 +108,7 @@ module Media
           end
 
           def destroy
-            delete "/:id" do
+            delete %r{/(?<id>#{pattern})} do
               return 403 unless authorize.destroy?
 
               if item.destroy
@@ -117,7 +120,7 @@ module Media
           end
         end
 
-        before "/:id" do
+        before %r{/(?<id>#{pattern})} do
           not_found unless parameters.id and item
 
           etag          present(item).etag
@@ -133,7 +136,7 @@ module Media
         end
 
         def collection
-          @collection ||= authorize.collection
+          @collection ||= authorize.collection(self.class.model)
         end
 
         def find_template(views, name, engine, &block)
@@ -155,7 +158,7 @@ module Media
         end
 
         def parameters
-          self.class.parameters.new(params)
+          self.class.parameters.new(params, pattern: self.class.pattern)
         end
 
         def present(obj)

@@ -4,13 +4,11 @@ module Media
   module Web
     module Parameters
       class Base
-        UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
-
         attr_reader :params, :pattern
 
         def initialize(params, options = {})
           @params  = params
-          @pattern = options.fetch(:pattern, UUID)
+          @pattern = options.fetch(:pattern)
         end
 
         def id
