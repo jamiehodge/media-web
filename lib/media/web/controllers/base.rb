@@ -82,8 +82,7 @@ module Media
             get "/:id/download" do
               return 403 unless authorize.download?
 
-              send_file item.file, disposition: :inline,
-                filename: item.name
+              send_file item.file, filename: item.name
             end
           end
 
