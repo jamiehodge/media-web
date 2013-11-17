@@ -26,6 +26,11 @@ module Media
         def password
           params[:password]
         end
+
+        def query
+          params[:query]
+        end
+
         def upload(name = "file")
           Upload.new(params[name])
         end
