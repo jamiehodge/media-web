@@ -13,8 +13,8 @@ module Media
           dataset.nullify
         end
 
-        def collection
-          self.class.collection(person, item.class.dataset)
+        def collection(dataset = item.class.dataset)
+          self.class.collection(person, dataset)
         end
 
         def index?
