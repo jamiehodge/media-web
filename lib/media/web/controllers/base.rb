@@ -41,6 +41,12 @@ module Media
             destroy
           end
 
+          def static
+            index
+            guard
+            show
+          end
+
           def index
             get "/" do
               return 403 unless authorize.index?
