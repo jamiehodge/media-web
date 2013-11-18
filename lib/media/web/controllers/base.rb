@@ -35,6 +35,7 @@ module Media
           def crud
             index
             create
+            guard
             show
             update
             destroy
@@ -119,13 +120,15 @@ module Media
               end
             end
           end
-        end
 
-        before %r{/(?<id>#{pattern})} do
-          not_found unless parameters.id and item
+          def guard
+            before %r{/(?<id>#{pattern})} do
+              not_found unless parameters.id and item
 
-          etag          present(item).etag
-          last_modified present(item).last_modified
+              etag          present(item).etag
+              last_modified present(item).last_modified
+            end
+          end
         end
 
         def authenticate
