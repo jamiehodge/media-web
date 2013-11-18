@@ -10,7 +10,7 @@ module Media
         end
 
         def collection
-          Scope.new(person, item.class.dataset).resolve
+          Scope.new(person, item.class).resolve
         end
 
         def index?
@@ -18,7 +18,7 @@ module Media
         end
 
         def show?
-          collection.where(id: item.id).exists
+          !!collection[item.id]
         end
 
         def download?
