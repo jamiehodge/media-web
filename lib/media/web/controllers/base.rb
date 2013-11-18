@@ -22,6 +22,7 @@ module Media
         set(:policy)        { Policies::Base }
         set(:presenter)     { Presenters::Base }
         set(:provides)      { %w(application/json) }
+        set(:scoper)        { Policies::Base::Scope }
 
         use Rack::Cache,
           metastore:   ENV["RACK_CACHE_META"],
@@ -136,7 +137,7 @@ module Media
         end
 
         def collection
-          @collection ||= authorize.collection(self.class.model)
+          @collection ||= scope
         end
 
         def find_template(views, name, engine, &block)
@@ -177,6 +178,10 @@ module Media
           end
 
           send(renderer, template, options)
+        end
+
+        def scope
+          self.class.scoper.new(authenticate.person_id, self.class.model).resolve
         end
       end
     end

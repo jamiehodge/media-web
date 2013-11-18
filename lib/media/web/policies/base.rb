@@ -9,12 +9,8 @@ module Media
           @item   = item
         end
 
-        def self.collection(person, dataset)
-          dataset.nullify
-        end
-
-        def collection(dataset = item.class.dataset)
-          self.class.collection(person, dataset)
+        def collection
+          Scope.new(person, item.class.dataset).resolve
         end
 
         def index?
@@ -51,6 +47,20 @@ module Media
 
         def fields
           []
+        end
+
+        class Scope
+
+          attr_reader :dataset, :person
+
+          def initialize(person, dataset)
+            @dataset = dataset
+            @person  = person
+          end
+
+          def resolve
+            dataset
+          end
         end
       end
     end
