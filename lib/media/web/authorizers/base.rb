@@ -1,16 +1,17 @@
 module Media
   module Web
-    module Policies
+    module Authorizers
       class Base
-        attr_reader :person, :item
+        attr_reader :person, :item, :scoper
 
-        def initialize(person, item)
+        def initialize(person, item, options = {})
           @person = person
           @item   = item
+          @scoper = options.fetch(:scoper) { Scope }
         end
 
         def collection
-          Scope.new(person, item.class).resolve
+          scoper.call(person, item.class)
         end
 
         def index?
@@ -49,16 +50,10 @@ module Media
           []
         end
 
-        class Scope
+        module Scope
+          extend self
 
-          attr_reader :dataset, :person
-
-          def initialize(person, dataset)
-            @dataset = dataset
-            @person  = person
-          end
-
-          def resolve
+          def call(person, dataset)
             dataset
           end
         end

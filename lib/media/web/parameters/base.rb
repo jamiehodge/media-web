@@ -27,8 +27,16 @@ module Media
           params[:password]
         end
 
+        def person_id
+          params[:person_id]
+        end
+
         def query
           params[:query]
+        end
+
+        def token
+          params[:token]
         end
 
         def upload(name = "file")

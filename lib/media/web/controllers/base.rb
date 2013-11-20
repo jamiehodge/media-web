@@ -4,6 +4,7 @@ require "slim"
 require "yajl"
 
 require_relative "descendable"
+require_relative "token"
 
 module Media
   module Web
@@ -13,16 +14,16 @@ module Media
 
         UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
 
-        set(:authenticator) { Authenticators::Base }
-        set(:headers)       { Headers::Base }
+        set(:authenticator) { raise NotImplementedError }
+        set(:authorizer)    { Authorizers::Base }
+        set(:directory)     { raise NotImplementedError }
         set(:model)         { raise NotImplementedError }
         set(:namespace)     { name.split("::").last.downcase }
         set(:parameters)    { Parameters::Base }
         set(:pattern)       { UUID }
-        set(:policy)        { Policies::Base }
         set(:presenter)     { Presenters::Base }
         set(:provides)      { %w(application/json) }
-        set(:scoper)        { Policies::Base::Scope }
+        set(:scoper)        { authorizer::Scope }
 
         use Rack::Cache,
           metastore:   ENV["RACK_CACHE_META"],
@@ -35,7 +36,6 @@ module Media
           def crud
             index
             create
-            guard
             show
             update
             destroy
@@ -43,7 +43,6 @@ module Media
 
           def static
             index
-            guard
             show
           end
 
@@ -51,9 +50,7 @@ module Media
             get "/" do
               return 403 unless authorize.index?
 
-              etag          present(collection).etag
-              last_modified present(collection).last_modified
-
+              preconditions(collection)
               respond_with :index, locals: { collection: present(collection) }
             end
           end
@@ -67,12 +64,8 @@ module Media
 
               if item.save
                 headers["Location"] = url(item.id)
-
+                preconditions(item)
                 status 201
-
-                etag          present(item).etag
-                last_modified present(item).last_modified
-
                 respond_with :show, locals: { item: present(item) }
               else
                 status 400
@@ -83,6 +76,9 @@ module Media
 
           def show
             get %r{/(?<id>#{pattern})} do
+              not_found unless item?
+              preconditions(item)
+
               return 403 unless authorize.show?
 
               respond_with :show, locals: { item: present(item) }
@@ -90,6 +86,9 @@ module Media
           end
 
           def download
+            not_found unless item?
+            preconditions(item)
+
             get %r{/(?<id>#{pattern})/download} do
               return 403 unless authorize.download?
 
@@ -99,14 +98,15 @@ module Media
 
           def update
             put %r{/(?<id>#{pattern})} do
+              not_found unless item?
+              preconditions(item)
+
               item.set_fields(params, authorize.fields, missing: :skip)
 
               return 403 unless authorize.update?
 
               if item.save or not item.modified?
-                etag          present(item).etag
-                last_modified present(item).last_modified
-
+                preconditions(item)
                 respond_with :show, locals: { item: present(item) }
               else
                 status 400
@@ -117,6 +117,9 @@ module Media
 
           def destroy
             delete %r{/(?<id>#{pattern})} do
+              not_found unless item?
+              preconditions(item)
+
               return 403 unless authorize.destroy?
 
               if item.destroy
@@ -126,28 +129,54 @@ module Media
               end
             end
           end
-
-          def guard
-            before %r{/(?<id>#{pattern})} do
-              not_found unless parameters.id and item
-
-              etag          present(item).etag
-              last_modified present(item).last_modified
-            end
-          end
         end
 
-        def authenticate
-          self.class.authenticator.new(self, nil)
+        def authentication
+          self.class.authenticator[token]
         end
 
-        def authorize
-          self.class.policy.new(authenticate.person_id, item)
+        def authorization
+          self.class.authorizer.new(user, item)
+        end
+
+        def user
+          self.class.directory[authentication.person_id]
+        end
+
+        def scope
+          self.class.scoper.call(user, self.class.model)
         end
 
         def collection
-          @collection ||= scope
+          scope
         end
+
+        def item
+          @item ||= parameters.id ? self.class.model[parameters.id] : self.class.model.new
+        end
+
+        def item?
+          parameters.id and item
+        end
+
+        def preconditions(obj)
+          etag          present(obj).etag
+          last_modified present(obj).last_modified
+        end
+
+        def present(obj)
+          self.class.presenter.create(self, obj)
+        end
+
+        def parameters
+          self.class.parameters.new(params, pattern: self.class.pattern)
+        end
+
+        def token
+          Token.new(request)
+        end
+
+        private
 
         def find_template(views, name, engine, &block)
           views = Pathname(views)
@@ -155,28 +184,6 @@ module Media
           [views, views + self.class.namespace, views + "base"].each do |path|
             super(path, name, engine, &block)
           end
-        end
-
-        def item
-          @item ||= begin
-            if id = parameters.id
-              self.class.model[id]
-            else
-              self.class.model.new
-            end
-          end
-        end
-
-        def parameters
-          self.class.parameters.new(params, pattern: self.class.pattern)
-        end
-
-        def present(obj)
-          self.class.presenter.create(self, obj)
-        end
-
-        def request_headers
-          self.class.headers.new(request)
         end
 
         def respond_with(template, options = {})
@@ -187,10 +194,6 @@ module Media
           end
 
           send(renderer, template, options)
-        end
-
-        def scope
-          self.class.scoper.new(authenticate.person_id, self.class.model).resolve
         end
       end
     end

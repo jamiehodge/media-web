@@ -2,7 +2,7 @@ require_relative "base"
 
 module Media
   module Web
-    module Policies
+    module Authorizers
       class Public < Base
 
         def self.collection(person, dataset)

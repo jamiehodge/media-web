@@ -2,7 +2,7 @@ require_relative "base"
 
 module Media
   module Web
-    module Policies
+    module Authorizers
       class Static < Base
 
         def self.collection(person, dataset)
